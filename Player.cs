@@ -10,12 +10,12 @@ namespace MusicPlayer
     public class Player
     {
 
-        public Player(Skin skin)
+        public Player(ISkin skin)
         {
             this.skin = skin;
         }
 
-        public Skin skin;       
+        public ISkin skin;       
 
 
         const int MIN_VOLUME = 0;
@@ -172,38 +172,38 @@ namespace MusicPlayer
 
     }
 
-    public abstract class Skin
+    public interface ISkin
     {
-        public abstract void Clear();
-        public abstract void Render(string str);
+         void Clear();
+         void Render(string str);
     }
 
-    public class ClassicSkin: Skin
+    public class ClassicSkin: ISkin
     {
-        public override void Clear()
+        public void Clear()
         {
             Console.Clear();
         }
 
-        public override void Render(string str)
+        public void Render(string str)
         {
             Console.WriteLine(str);
         }
     }
 
-    public class ColorSkin : Skin
+    public class ColorSkin : ISkin
     {
         ConsoleColor color;
         public ColorSkin(ConsoleColor col)
         {
             col = color;
         }
-        public override void Clear()
+        public void Clear()
         {
             Console.Clear();
         }
 
-        public override void Render(string str)
+        public void Render(string str)
         {
             Console.ForegroundColor = color;
             Console.WriteLine(str);
@@ -211,9 +211,9 @@ namespace MusicPlayer
         }
     }
 
-    public class ColorSkin2 : Skin
+    public class ColorSkin2 : ISkin
     {
-        public override void Clear()
+        public void Clear()
         {
             Console.Clear();
 
@@ -225,7 +225,7 @@ namespace MusicPlayer
             }
         }
 
-        public override void Render(string str)
+        public void Render(string str)
         {
             Random rand = new Random();
             Console.ForegroundColor = (ConsoleColor)rand.Next(0, 15);
