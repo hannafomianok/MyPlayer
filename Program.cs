@@ -12,7 +12,7 @@ namespace MusicPlayer
     {
         static void Main(string[] args)
         {
-            var player = new Player();
+            var player = new Player(new ColorSkin2());
             //player.Volume = 20;
                        
             var  result = GetSongsData();
@@ -56,7 +56,7 @@ namespace MusicPlayer
             
             player.Add( randSong , randSong_2, randSong_3 );            
             SongsExtensions.Shuffle(player.Songs);
-            player.Songs = FilterByGenre(player.Songs);
+            //player.Songs = FilterByGenre(player.Songs);
             
            
             player.Play();

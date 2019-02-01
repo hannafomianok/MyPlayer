@@ -9,6 +9,15 @@ namespace MusicPlayer
 {
     public class Player
     {
+
+        public Player(Skin skin)
+        {
+            this.skin = skin;
+        }
+
+        public Skin skin;       
+
+
         const int MIN_VOLUME = 0;
         const int MAX_VOLUME = 100;
 
@@ -87,13 +96,14 @@ namespace MusicPlayer
             _isPlaying = true;
             for (int i = 0; i < Songs.Count; i++)
             {
-                Songs[i].Name = SongsExtensions.Cutting(Songs[i].Name);
+                //Songs[i].Name = SongsExtensions.Cutting(Songs[i].Name);
                 if (Songs[i].Like.HasValue)
                 {
                     if (Songs[i].Like == true)
-                    {                                          
+                    {
                         Console.ForegroundColor = ConsoleColor.Green;
-                        Console.WriteLine($"Player is playing: {Songs[i].Name}, duration: {Songs[i].Duration}");
+                        skin.Render(Songs[i].Name);                       
+                        //Console.WriteLine($"Player is playing: {Songs[i].Name}, duration: {Songs[i].Duration}");
                         System.Threading.Thread.Sleep(1000);
                         Console.ResetColor();
                     }
@@ -101,17 +111,20 @@ namespace MusicPlayer
                     else
                     {
                         Console.ForegroundColor = ConsoleColor.Red;
-                        Console.WriteLine($"Player is playing: {Songs[i].Name}, duration: {Songs[i].Duration}");
+                        skin.Render(Songs[i].Name);
+                        //Console.WriteLine($"Player is playing: {Songs[i].Name}, duration: {Songs[i].Duration}");
                         System.Threading.Thread.Sleep(1000);
                         Console.ResetColor();
                     }
                 }
                 else
                 {
-                    Console.WriteLine($"Player is playing: {Songs[i].Name}, duration: {Songs[i].Duration}");
+                    skin.Render(Songs[i].Name);
+                    //Console.WriteLine($"Player is playing: {Songs[i].Name}, duration: {Songs[i].Duration}");
                     System.Threading.Thread.Sleep(1000);
                 }
             }
+            skin.Clear();
         }
 
         public void Stop()
@@ -157,6 +170,68 @@ namespace MusicPlayer
             Songs.Sort();
         }
 
+    }
+
+    public abstract class Skin
+    {
+        public abstract void Clear();
+        public abstract void Render(string str);
+    }
+
+    public class ClassicSkin: Skin
+    {
+        public override void Clear()
+        {
+            Console.Clear();
+        }
+
+        public override void Render(string str)
+        {
+            Console.WriteLine(str);
+        }
+    }
+
+    public class ColorSkin : Skin
+    {
+        ConsoleColor color;
+        public ColorSkin(ConsoleColor col)
+        {
+            col = color;
+        }
+        public override void Clear()
+        {
+            Console.Clear();
+        }
+
+        public override void Render(string str)
+        {
+            Console.ForegroundColor = color;
+            Console.WriteLine(str);
+            Console.ResetColor();
+        }
+    }
+
+    public class ColorSkin2 : Skin
+    {
+        public override void Clear()
+        {
+            Console.Clear();
+
+            for (int i = 0; i < 30; i++)
+            {
+                char c = '\u058D';
+                Console.WriteLine(c);
+
+            }
+        }
+
+        public override void Render(string str)
+        {
+            Random rand = new Random();
+            Console.ForegroundColor = (ConsoleColor)rand.Next(0, 15);
+            Console.WriteLine(str);
+            Console.ResetColor();
+        }
     }
 }
 
