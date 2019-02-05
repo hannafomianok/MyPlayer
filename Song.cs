@@ -6,15 +6,19 @@ using System.Threading.Tasks;
 
 namespace MusicPlayer
 {
-    public class Song
+    [Serializable]
+    public class Song : IComparable
     {
         public int Duration;
         public string Name;
-        public string Lyrics;
+        public string Path;
         public Artist Artist;
         public Album Album;
         public bool? Like;
 
+        public Song()
+        {
+        }
 
         public void Liking()
         {
@@ -24,6 +28,11 @@ namespace MusicPlayer
         public void Disliking()
         {
             Like = false;
+        }
+
+        public int CompareTo(object obj)
+        {
+            return this.Name?.CompareTo((obj as Song)?.Name) ?? 0;
         }
     }
 }

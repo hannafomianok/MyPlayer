@@ -24,16 +24,12 @@ namespace MusicPlayer
         public SongGenres Genre;
         public string Name;
 
-        public Artist()
+        public Artist(): this("Default artist", SongGenres.DefaultGenre)
         {
-            this.Name = "Default artist";
-            this.Genre = SongGenres.DefaultGenre;
         }
 
-        public Artist(string name)
+        public Artist(string name): this(name, SongGenres.DefaultGenre)
         {
-            this.Name = name;
-            this.Genre = SongGenres.DefaultGenre;
         }
 
         public Artist(string name, SongGenres genre)

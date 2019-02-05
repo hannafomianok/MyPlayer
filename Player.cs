@@ -4,25 +4,26 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using MusicPlayer.Extensions;
+using System.IO;
+using System.Xml.Serialization;
 
 namespace MusicPlayer
 {
     public class Player
     {
 
-        public Player(ISkin skin)
+        public Player(SongsExtensions.ISkin skin)
         {
             this.skin = skin;
         }
 
-        public ISkin skin;       
+        public SongsExtensions.ISkin skin;
 
 
         const int MIN_VOLUME = 0;
         const int MAX_VOLUME = 100;
 
         private bool _isLocked;
-
         private bool _isPlaying;
 
         private int _volume;
@@ -34,7 +35,7 @@ namespace MusicPlayer
                 return _isPlaying;
             }
         }
-        
+
         public int Volume
         {
             get
@@ -59,9 +60,12 @@ namespace MusicPlayer
             }
         }
 
+        public List<Song> Songs { get; set; } = new List<Song>();
+        public Song PlayingSong { get; private set; }
 
-
-        public List<Song> Songs { get;  set; } = new List<Song>();
+        public event Action<List<Song>, Song, bool, int> SongsListChangedEvent;
+        public event Action<List<Song>, Song, bool, int> SongStartedEvent;
+        public event Action<List<Song>, Song, bool, int> VolumeChangedEvent;
 
         public void VolumeUp()
         {
@@ -69,6 +73,8 @@ namespace MusicPlayer
             {
                 Volume++;
             }
+
+            VolumeChangedEvent?.Invoke(null, null, _isLocked, _volume);
         }
 
         public void VolumeDown()
@@ -77,6 +83,9 @@ namespace MusicPlayer
             {
                 Volume--;
             }
+
+            VolumeChangedEvent?.Invoke(null, null, _isLocked, _volume);
+
         }
 
         public void VolumeChange(int step)
@@ -85,153 +94,108 @@ namespace MusicPlayer
             {
                 Volume += step;
             }
+
+            VolumeChangedEvent?.Invoke(Songs, PlayingSong, _isLocked, _volume);
+
+        }
+
+        public void Load(string source)
+        {
+            var direcInfo = new DirectoryInfo(source);
+
+            if (direcInfo.Exists)
+            {
+                var files = direcInfo.GetFiles();
+                foreach (var file in files)
+                {
+                    var song = new Song
+                    {
+                        Path = file.FullName,
+                        Name = file.Name
+                    };
+
+                    Songs.Add(song);
+                }
+            }
+
+            SongsListChangedEvent?.Invoke(Songs, PlayingSong, _isLocked, _volume);
         }
 
         public void Play()
         {
-            if (_isLocked)
+            if (!_isLocked && Songs.Count > 0)
             {
-                return;
+                _isPlaying = true;
             }
-            _isPlaying = true;
-            for (int i = 0; i < Songs.Count; i++)
-            {
-                //Songs[i].Name = SongsExtensions.Cutting(Songs[i].Name);
-                if (Songs[i].Like.HasValue)
-                {
-                    if (Songs[i].Like == true)
-                    {
-                        Console.ForegroundColor = ConsoleColor.Green;
-                        skin.Render(Songs[i].Name);                       
-                        //Console.WriteLine($"Player is playing: {Songs[i].Name}, duration: {Songs[i].Duration}");
-                        System.Threading.Thread.Sleep(1000);
-                        Console.ResetColor();
-                    }
 
-                    else
+            if (_isPlaying)
+            {
+                foreach (var song in Songs)
+                {
+                    PlayingSong = song;
+                    SongStartedEvent?.Invoke(Songs, song, _isLocked, _volume);
+
+                    using (System.Media.SoundPlayer player = new System.Media.SoundPlayer())
                     {
-                        Console.ForegroundColor = ConsoleColor.Red;
-                        skin.Render(Songs[i].Name);
-                        //Console.WriteLine($"Player is playing: {Songs[i].Name}, duration: {Songs[i].Duration}");
-                        System.Threading.Thread.Sleep(1000);
-                        Console.ResetColor();
+                        player.SoundLocation = PlayingSong.Path;
+                        player.PlaySync();
                     }
                 }
-                else
-                {
-                    skin.Render(Songs[i].Name);
-                    //Console.WriteLine($"Player is playing: {Songs[i].Name}, duration: {Songs[i].Duration}");
-                    System.Threading.Thread.Sleep(1000);
-                }
             }
-            skin.Clear();
+
+            _isPlaying = false;
         }
 
-        public void Stop()
+        public bool Stop()
         {
-            if (_isLocked)
+            if (!_isLocked)
             {
-                return;
+                _isPlaying = false;
             }
-            _isPlaying = false;
-            Console.WriteLine("Player has stopped");
+            return _isPlaying;
+        }
+
+        public void Clear()
+        {
+            Songs.Clear();
         }
 
         public void Locked()
         {
             _isLocked = true;
-            Console.WriteLine("Player is locked");
         }
         public void Unlock()
         {
             _isLocked = false;
-            Console.WriteLine("Player is unlocked");
         }
 
-        public void Add(params Song[] songArr)
-        {
-            Songs.AddRange(songArr);
-        }
-
-        public void Shuffle()
-        {
-            Random rnd = new Random();
-
-            for (int i = Songs.Count - 1; i >= 0; i--)
-            {
-                var song = Songs[rnd.Next(Songs.Count - 1)];
-                Songs.Remove(song);
-                Songs.Add(song);
-            }
-
-        }
         public void Sort()
         {
             Songs.Sort();
         }
 
-    }
-
-    public interface ISkin
-    {
-         void Clear();
-         void Render(string str);
-    }
-
-    public class ClassicSkin: ISkin
-    {
-        public void Clear()
+        public void SaveAsPlaylist()
         {
-            Console.Clear();
-        }
+            XmlSerializer xmlSerializer = new XmlSerializer(typeof(Song[]));
 
-        public void Render(string str)
-        {
-            Console.WriteLine(str);
-        }
-    }
-
-    public class ColorSkin : ISkin
-    {
-        ConsoleColor color;
-        public ColorSkin(ConsoleColor col)
-        {
-            col = color;
-        }
-        public void Clear()
-        {
-            Console.Clear();
-        }
-
-        public void Render(string str)
-        {
-            Console.ForegroundColor = color;
-            Console.WriteLine(str);
-            Console.ResetColor();
-        }
-    }
-
-    public class ColorSkin2 : ISkin
-    {
-        public void Clear()
-        {
-            Console.Clear();
-
-            for (int i = 0; i < 30; i++)
+            using (FileStream writer = new FileStream("c://XMLFile.xml", FileMode.OpenOrCreate))
             {
-                char c = '\u058D';
-                Console.WriteLine(c);
-
+                xmlSerializer.Serialize(writer, Songs);
             }
         }
 
-        public void Render(string str)
+        public void LoadPlaylist()
         {
-            Random rand = new Random();
-            Console.ForegroundColor = (ConsoleColor)rand.Next(0, 15);
-            Console.WriteLine(str);
-            Console.ResetColor();
+            XmlSerializer xmlSerializer = new XmlSerializer(typeof(Song[]));
+            Song result;
+
+            using (FileStream writer = new FileStream("c://XMLFile.xml", FileMode.OpenOrCreate))
+            {
+                result = (Song)xmlSerializer.Deserialize(writer);
+            }
         }
+
+     
     }
 }
 
